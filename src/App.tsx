@@ -48,6 +48,8 @@ const App: React.FC = () => {
   const [availableSnapshots, setAvailableSnapshots] = useState<{timestamp: string, readableDate: string}[]>([]);
   const [isFetchingSnapshots, setIsFetchingSnapshots] = useState(false);
   const [showSnapshotSelector, setShowSnapshotSelector] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [zipFileName, setZipFileName] = useState('');
 
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -693,13 +695,11 @@ const App: React.FC = () => {
     setStep('zipping');
     addLog(`Packaging ${successCount} files...`, 'info');
     const zipContent = await zip.generateAsync({ type: 'blob' });
-    const downloadUrl = URL.createObjectURL(zipContent);
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = `${domain.replace(/[^a-z0-9]/gi, '_')}.zip`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const url = URL.createObjectURL(zipContent);
+    const fileName = `${domain.replace(/[^a-z0-9]/gi, '_')}.zip`;
+    
+    setDownloadUrl(url);
+    setZipFileName(fileName);
     
     setStep('complete');
     addLog(`Complete! Site extracted with ${successCount} files.`, 'success');
@@ -728,6 +728,8 @@ const App: React.FC = () => {
     setDiscoveredUrls([]);
     setAvailableSnapshots([]);
     setShowSnapshotSelector(false);
+    setDownloadUrl(null);
+    setZipFileName('');
     
     // Phase 1: Fetch Available Snapshots
     await fetchSnapshots(cleanDomain);
@@ -1061,9 +1063,31 @@ const App: React.FC = () => {
                   <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{progress}%</span>
                 </div>
                 
-                <div className="progress-bar">
+                <div className="progress-bar" style={{ marginBottom: step === 'complete' && downloadUrl ? '20px' : '0' }}>
                   <div className="progress-fill" style={{ width: `${progress}%` }}></div>
                 </div>
+
+                {step === 'complete' && downloadUrl && (
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', animation: 'pulse 2s infinite' }}>
+                    <a 
+                      href={downloadUrl} 
+                      download={zipFileName}
+                      className="glow-btn"
+                      style={{ 
+                        padding: '16px 45px', 
+                        fontSize: '1.2rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '12px',
+                        textDecoration: 'none',
+                        boxShadow: '0 0 30px rgba(0, 184, 148, 0.4)'
+                      }}
+                    >
+                      <Download size={24} />
+                      Download Complete ZIP
+                    </a>
+                  </div>
+                )}
 
                 <div className="log-container">
                   {logs.map((log, i) => (
@@ -1115,6 +1139,11 @@ const App: React.FC = () => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.4); }
+          70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(0, 184, 148, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0); }
         }
       `}</style>
     </div>
