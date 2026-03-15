@@ -165,8 +165,15 @@ const App: React.FC = () => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
+  const getNativeProxy = (url: string) => {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // Use Vite Local Proxy if developing, otherwise use Vercel Serverless Proxy
+    const proxyBase = isLocal ? '/local-proxy' : '/api/proxy';
+    return `${proxyBase}?url=${encodeURIComponent(url)}`;
+  };
+
   const proxies = [
-    (url: string) => `/api/proxy?url=${encodeURIComponent(url)}`,
+    getNativeProxy,
     (url: string) => `https://cors-anywhere.herokuapp.com/${url}`,
     (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
     (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -207,29 +214,8 @@ const App: React.FC = () => {
       }
     }
 
-    const isLocal = 
-      window.location.hostname === 'localhost' || 
-      window.location.hostname === '127.0.0.1' || 
-      window.location.hostname === '[::1]' ||
-      window.location.protocol === 'file:' ||
-      /^(\d{1,3}\.){3}\d{1,3}$/.test(window.location.hostname); // Any IP address
-
-    if (isLocal) {
-      addLog(`LOCAL ENVIRONMENT DETECTED: The per-site "/api/proxy" is inactive.`, 'warning');
-      addLog(`🔧 ACTION REQ: Ensure your "CORS Unblocker" extension is ENABLED for local testing.`, 'info');
-    } else {
-      addLog(`PROXY WARNING: Public proxies are being rate-limited by Wayback.`, 'warning');
-    }
-
-    // SILENT FALLBACK: If all proxies failed, try a direct fetch. 
-    // This will work if the user has a CORS extension enabled.
-    try {
-      const response = await fetch(targetUrl);
-      if (response.ok) {
-        const content = await (useRaw ? response.blob() : response.text());
-        return { content, success: true };
-      }
-    } catch (e) {}
+    addLog(`All proxy attempts failed. This might be a temporary rate limit by the Wayback Machine.`, 'error');
+    addLog(`💡 TIP: Try again in a few moments, or check if the domain is currently available on archive.org.`, 'info');
     
     return { content: null, success: false };
   };
