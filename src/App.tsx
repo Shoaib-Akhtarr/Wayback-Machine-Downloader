@@ -165,6 +165,7 @@ const App: React.FC = () => {
   }, [logs]);
 
   const proxies = [
+    (url: string) => `/api/proxy?url=${encodeURIComponent(url)}`,
     (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
     (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
     (url: string) => `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(url)}`, 
