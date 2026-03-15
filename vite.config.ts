@@ -3,25 +3,35 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      '/local-proxy': {
-        target: 'https://web.archive.org',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/local-proxy/, ''),
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
-          });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request to the Target:', req.method, req.url);
-          });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
-          });
-        },
-      },
-    },
-  },
+  plugins: [
+    react(),
+    {
+      name: 'wayback-local-proxy',
+      configureServer(server) {
+        server.middlewares.use(async (req, res, next) => {
+          if (req.url?.startsWith('/local-proxy')) {
+            const urlStr = new URL(req.url, `http://${req.headers.host}`).searchParams.get('url');
+            if (!urlStr) return res.end('Missing URL');
+            
+            try {
+              const response = await fetch(urlStr, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+              });
+              const contentType = response.headers.get('content-type');
+              if (contentType) res.setHeader('Content-Type', contentType);
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              
+              const arrayBuffer = await response.arrayBuffer();
+              res.end(Buffer.from(arrayBuffer));
+            } catch (e) {
+              res.statusCode = 500;
+              res.end('Local Proxy Error');
+            }
+          } else {
+            next();
+          }
+        });
+      }
+    }
+  ]
 })
