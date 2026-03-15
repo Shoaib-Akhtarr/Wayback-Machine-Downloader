@@ -167,8 +167,9 @@ const App: React.FC = () => {
 
   const proxies = [
     (url: string) => `/api/proxy?url=${encodeURIComponent(url)}`,
-    (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    (url: string) => `https://cors-anywhere.herokuapp.com/${url}`, // Backup
     (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
     (url: string) => `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(url)}`, 
     (url: string) => `https://thingproxy.freeboard.io/fetch/${url}`,
   ];
@@ -204,7 +205,14 @@ const App: React.FC = () => {
     }
 
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    addLog(`Download failed after trying all proxies. Suggestions: 1. Deploy to Vercel/Netlify for the native proxy to work. 2. ${isLocal ? 'For local testing, use a "CORS Unblocker" extension.' : 'The public proxies might be temporarily down.'}`, 'error');
+    
+    if (isLocal) {
+      addLog(`LOCAL DEV DETECTED: The modern "/api/proxy" requires a backend.`, 'warning');
+      addLog(`👉 To fix: 1. Deploy to Vercel (recommended) OR 2. Use a CORS extension for local testing.`, 'info');
+    } else {
+      addLog(`Download failed. The Wayback Machine might be rate-limiting these public proxies.`, 'error');
+    }
+    
     return { content: null, success: false };
   };
 
