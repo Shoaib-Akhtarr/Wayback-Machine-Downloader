@@ -201,7 +201,8 @@ const App: React.FC = () => {
       }
     }
 
-    addLog(`All proxies failed. Suggestion: Install and enable a CORS extension for direct fetching.`, 'warning');
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    addLog(`Download failed after trying all proxies. Suggestions: 1. Deploy to Vercel/Netlify for the native proxy to work. 2. ${isLocal ? 'For local testing, use a "CORS Unblocker" extension.' : 'The public proxies might be temporarily down.'}`, 'error');
     return { content: null, success: false };
   };
 
