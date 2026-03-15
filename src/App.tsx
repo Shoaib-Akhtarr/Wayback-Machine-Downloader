@@ -211,15 +211,25 @@ const App: React.FC = () => {
       window.location.hostname === 'localhost' || 
       window.location.hostname === '127.0.0.1' || 
       window.location.hostname === '[::1]' ||
-      window.location.protocol === 'file:';
-    
+      window.location.protocol === 'file:' ||
+      /^(\d{1,3}\.){3}\d{1,3}$/.test(window.location.hostname); // Any IP address
+
     if (isLocal) {
-      addLog(`LOCAL ENVIRONMENT DETECTED: The per-site "/api/proxy" is inactive locally.`, 'warning');
-      addLog(`🔧 FOR LOCAL USE: You MUST use a "CORS Unblocker" extension OR run via "vercel dev".`, 'info');
+      addLog(`LOCAL ENVIRONMENT DETECTED: The per-site "/api/proxy" is inactive.`, 'warning');
+      addLog(`🔧 ACTION REQ: Ensure your "CORS Unblocker" extension is ENABLED for local testing.`, 'info');
     } else {
-      addLog(`ALL PROXIES FAILED: The Wayback Machine is rate-limiting public traffic.`, 'error');
-      addLog(`💡 PRO TIP: This app works 100% reliably once deployed to Vercel/Netlify using its native proxy.`, 'info');
+      addLog(`PROXY WARNING: Public proxies are being rate-limited by Wayback.`, 'warning');
     }
+
+    // SILENT FALLBACK: If all proxies failed, try a direct fetch. 
+    // This will work if the user has a CORS extension enabled.
+    try {
+      const response = await fetch(targetUrl);
+      if (response.ok) {
+        const content = await (useRaw ? response.blob() : response.text());
+        return { content, success: true };
+      }
+    } catch (e) {}
     
     return { content: null, success: false };
   };
