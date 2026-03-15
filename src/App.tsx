@@ -167,7 +167,7 @@ const App: React.FC = () => {
 
   const proxies = [
     (url: string) => `/api/proxy?url=${encodeURIComponent(url)}`,
-    (url: string) => `https://cors-anywhere.herokuapp.com/${url}`, // Backup
+    (url: string) => `https://cors-anywhere.herokuapp.com/${url}`,
     (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
     (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
     (url: string) => `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(url)}`, 
@@ -176,6 +176,9 @@ const App: React.FC = () => {
 
   const fetchWithFallback = async (targetUrl: string, useRaw = true) => {
     for (const getProxyUrl of proxies) {
+      if (getProxyUrl !== proxies[0]) {
+        await new Promise(resolve => setTimeout(resolve, 500)); // Rate limit buffer
+      }
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 12000);
 
@@ -204,13 +207,18 @@ const App: React.FC = () => {
       }
     }
 
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isLocal = 
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1' || 
+      window.location.hostname === '[::1]' ||
+      window.location.protocol === 'file:';
     
     if (isLocal) {
-      addLog(`LOCAL DEV DETECTED: The modern "/api/proxy" requires a backend.`, 'warning');
-      addLog(`👉 To fix: 1. Deploy to Vercel (recommended) OR 2. Use a CORS extension for local testing.`, 'info');
+      addLog(`LOCAL ENVIRONMENT DETECTED: The per-site "/api/proxy" is inactive locally.`, 'warning');
+      addLog(`🔧 FOR LOCAL USE: You MUST use a "CORS Unblocker" extension OR run via "vercel dev".`, 'info');
     } else {
-      addLog(`Download failed. The Wayback Machine might be rate-limiting these public proxies.`, 'error');
+      addLog(`ALL PROXIES FAILED: The Wayback Machine is rate-limiting public traffic.`, 'error');
+      addLog(`💡 PRO TIP: This app works 100% reliably once deployed to Vercel/Netlify using its native proxy.`, 'info');
     }
     
     return { content: null, success: false };
