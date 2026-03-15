@@ -43,7 +43,6 @@ const App: React.FC = () => {
   const [step, setStep] = useState<'idle' | 'discovery' | 'discovered' | 'downloading' | 'zipping' | 'complete'>('idle');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [discoveredUrls, setDiscoveredUrls] = useState<WaybackUrl[]>([]);
-  const [useDirectMode, setUseDirectMode] = useState(false);
   
   // Snapshot Selection State
   const [availableSnapshots, setAvailableSnapshots] = useState<{timestamp: string, readableDate: string}[]>([]);
@@ -173,23 +172,6 @@ const App: React.FC = () => {
   ];
 
   const fetchWithFallback = async (targetUrl: string, useRaw = true) => {
-    const directFetch = async () => {
-      try {
-        const response = await fetch(targetUrl);
-        if (response.status === 404) {
-          addLog(`Resource not found in archive: ${targetUrl.split('/').pop()}`, 'warning');
-          return { content: null, success: false };
-        }
-        if (response.ok) {
-          const content = await (useRaw ? response.blob() : response.text());
-          return { content, success: true };
-        }
-      } catch (e) {}
-      return { content: null, success: false };
-    };
-
-    if (useDirectMode) return await directFetch();
-
     for (const getProxyUrl of proxies) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 12000);
@@ -219,8 +201,8 @@ const App: React.FC = () => {
       }
     }
 
-    addLog(`All proxies failed. Suggestion: Enable DIRECT MODE and use a CORS extension.`, 'warning');
-    return await directFetch();
+    addLog(`All proxies failed. Suggestion: Install and enable a CORS extension for direct fetching.`, 'warning');
+    return { content: null, success: false };
   };
 
   const findAlternativeSnapshot = async (originalUrl: string) => {
@@ -784,55 +766,6 @@ const App: React.FC = () => {
             {isProcessing || isFetchingSnapshots ? <Loader2 className="animate-spin" /> : <Search size={20} />}
           </button>
         </div>
-
-        {/* Network & Mode Selector */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px' }}>
-          <div 
-            onClick={() => setUseDirectMode(!useDirectMode)}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '10px', 
-              cursor: 'pointer',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              background: useDirectMode ? 'rgba(0,184,148,0.1)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${useDirectMode ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}`,
-              transition: 'all 0.3s'
-            }}
-          >
-            <div style={{ 
-              width: '12px', 
-              height: '12px', 
-              borderRadius: '50%', 
-              background: useDirectMode ? 'var(--primary)' : 'var(--text-muted)' 
-            }} />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: useDirectMode ? 'white' : 'var(--text-muted)' }}>
-              DIRECT MODE {useDirectMode ? 'ON' : 'OFF'}
-            </span>
-          </div>
-          {!useDirectMode && (
-            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0, maxWidth: '200px' }}>
-              Using Proxy Rotation. Turn ON for 10x speed (CORS extension req).
-            </p>
-          )}
-        </div>
-
-        {/* Reliability Help Card */}
-        {step === 'idle' && !isProcessing && (
-          <div className="glass" style={{ 
-            marginTop: '30px', 
-            padding: '15px', 
-            background: 'rgba(255,165,0,0.05)', 
-            border: '1px dashed rgba(255,165,0,0.3)',
-            borderRadius: '15px'
-          }}>
-            <p style={{ fontSize: '0.8rem', color: '#ffa500', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Globe size={14} />
-              <span>Connection Reset? Public proxies can be unstable. For 100% reliability, install <b>"Allow CORS"</b> extension and enable <b>Direct Mode</b>.</span>
-            </p>
-          </div>
-        )}
 
         {/* Snapshot Selection Overlay */}
         {showSnapshotSelector && (
