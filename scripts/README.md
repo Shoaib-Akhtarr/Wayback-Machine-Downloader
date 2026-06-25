@@ -55,3 +55,22 @@ python verify_links.py -d <extracted_site_directory>
 ```bash
 python verify_links.py -d extracted_site
 ```
+
+---
+
+## 3. `php_to_html.py` (Local PHP to HTML Converter)
+
+A standalone utility script that renames `.php` and `.htm` files in a local directory to `.html` recursively, and updates all code link references inside `.html`, `.css`, and `.js` files to point to the new `.html` filenames.
+
+### Usage
+```bash
+python php_to_html.py -d <directory_path>
+```
+
+### Options
+- `-d`, `--dir`: Path to the directory containing files to convert (default: `extracted_site`).
+
+### Example
+```bash
+python php_to_html.py -d extracted_site
+```
