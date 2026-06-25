@@ -178,7 +178,11 @@ export const startExtraction = async (
   onProgress: (progress: ExtractionProgress) => void
 ) => {
   const zip = new JSZip();
-  const proxyUrl = '/local-proxy';
+  const isDevelopment = (import.meta as any).env?.DEV || 
+                        window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.hostname.startsWith('192.168.');
+  const proxyUrl = isDevelopment ? '/local-proxy' : '/api/proxy';
 
   try {
     // 1. Discover URLs via CDX API
