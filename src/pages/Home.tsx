@@ -56,26 +56,6 @@ const Home: React.FC = () => {
       });
     });
 
-    // Magnetic Button Effect
-    const btn = buttonRef.current;
-    if (btn) {
-      const handleMouseMove = (e: MouseEvent) => {
-        const { clientX, clientY } = e;
-        const { left, top, width, height } = btn.getBoundingClientRect();
-        const x = clientX - (left + width / 2);
-        const y = clientY - (top + height / 2);
-        gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
-      };
-      const handleMouseLeave = () => {
-        gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
-      };
-      btn.addEventListener('mousemove', handleMouseMove);
-      btn.addEventListener('mouseleave', handleMouseLeave);
-      return () => {
-        btn.removeEventListener('mousemove', handleMouseMove);
-        btn.removeEventListener('mouseleave', handleMouseLeave);
-      };
-    }
   }, []);
 
   const titleWords = "Entire Archived Sites".split(" ");
@@ -155,7 +135,13 @@ const Home: React.FC = () => {
             transition={{ delay: 1.4, duration: 1 }}
             className="max-w-4xl mx-auto mt-20"
           >
-            <div className="glass-card p-3 flex flex-col md:flex-row gap-4 group focus-within:ring-4 ring-accent-primary/20 transition-all shadow-2xl relative">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleStartExtraction();
+              }}
+              className="glass-card p-3 flex flex-col md:flex-row gap-4 group focus-within:ring-4 ring-accent-primary/20 transition-all shadow-2xl relative w-full"
+            >
               <div className="absolute inset-0 bg-accent-gradient opacity-0 group-focus-within:opacity-[0.03] transition-opacity rounded-3xl" />
               <div className="flex-grow flex items-center px-6 gap-4 relative z-10">
                 <Search className="text-text-dim group-focus-within:text-accent-primary transition-colors w-6 h-6" />
@@ -168,10 +154,10 @@ const Home: React.FC = () => {
                 />
               </div>
               <motion.button 
+                type="submit"
                 ref={buttonRef}
                 whileHover={{ scale: (extractionState.status === 'idle' || extractionState.status === 'error' || extractionState.status === 'completed') ? 1.02 : 1 }}
                 whileTap={{ scale: (extractionState.status === 'idle' || extractionState.status === 'error' || extractionState.status === 'completed') ? 0.98 : 1 }}
-                onClick={handleStartExtraction}
                 disabled={extractionState.status !== 'idle' && extractionState.status !== 'error' && extractionState.status !== 'completed'}
                 className={`gradient-button flex items-center justify-center gap-3 group/btn whitespace-nowrap !text-base !py-5 ${
                   (extractionState.status !== 'idle' && extractionState.status !== 'error' && extractionState.status !== 'completed') ? 'opacity-50 cursor-not-allowed' : ''
@@ -189,7 +175,7 @@ const Home: React.FC = () => {
                   </>
                 )}
               </motion.button>
-            </div>
+            </form>
 
             {/* Progress UI */}
             <AnimatePresence>
