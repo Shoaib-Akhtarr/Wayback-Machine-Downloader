@@ -188,7 +188,8 @@ export const startExtraction = async (
     // 1. Discover URLs via CDX API
     onProgress({ status: 'discovering', current: 0, total: 0, message: 'Searching Wayback Machine for archived pages...' });
     
-    const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(domain)}/*&output=json&fl=original,timestamp,mimetype&filter=statuscode:200&limit=50`;
+    const cleanDomain = domain.replace(/^www\./i, '');
+    const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(cleanDomain)}&matchType=domain&collapse=urlkey&sort=reverse&output=json&fl=original,timestamp,mimetype&filter=statuscode:200&limit=10000`;
     const cdxResponse = await fetch(`${proxyUrl}?url=${encodeURIComponent(cdxUrl)}`);
     
     if (!cdxResponse.ok) {
