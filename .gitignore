@@ -17,3 +17,12 @@ dist-ssr
 *.LOG2
 ntuser.ini
 python-installer.exe
+
+# Output dumps and local cache
+downloaded_images/
+gaziemir_images/
+temp_download_cache/
+extracted_site/
+organized_images/
+organized_archive_images/
+*.zip
